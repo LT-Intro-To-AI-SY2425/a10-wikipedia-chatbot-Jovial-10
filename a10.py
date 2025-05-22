@@ -1,4 +1,5 @@
 import re, string, calendar
+import nltk
 from wikipedia import WikipediaPage
 import wikipedia
 from bs4 import BeautifulSoup
@@ -7,6 +8,10 @@ from nltk.tree import Tree
 from match import match
 from typing import List, Callable, Tuple, Any, Match
 
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
 
 def get_page_html(title: str) -> str:
     """Gets html of a wikipedia page
