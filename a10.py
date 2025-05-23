@@ -1,8 +1,8 @@
 import re, string, calendar
-import nltk
 from wikipedia import WikipediaPage
 import wikipedia
 from bs4 import BeautifulSoup
+import nltk
 from nltk import word_tokenize, pos_tag, ne_chunk
 from nltk.tree import Tree
 from match import match
@@ -184,6 +184,49 @@ def search_pa_list(src: List[str]) -> List[str]:
             return answer if answer else ["No answers"]
 
     return ["I don't understand"]
+
+
+
+def get_death_date(name: str) -> str:
+    """Gets death date of the given person"""
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(name)))
+    pattern = r"(?:Died\D*)(?P<death>\d{4}-\d{2}-\d{2})"
+    error_text = (
+        "Page infobox has no death information (at least none in xxxx-xx-xx format)"
+    )
+    match = get_match(infobox_text, pattern, error_text)
+    return match.group("death")
+
+
+def get_capital_city(country: str) -> str:
+    """Gets the capital city of a country"""
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(country)))
+    pattern = r"Capital(?:.*?\n)*?\s*(?P<capital>[A-Z][a-z]+(?: [A-Z][a-z]+)*)"
+    error_text = "Page infobox has no capital city information"
+    match = get_match(infobox_text, pattern, error_text)
+    return match.group("capital")
+
+
+def get_founder(org: str) -> str:
+    """Gets founder of a company or organization"""
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(org)))
+    pattern = r"Founder(?:s)?\s*(?:.*?)\n(?P<founder>.+?)\n"
+    error_text = "Page infobox has no founder information"
+    match = get_match(infobox_text, pattern, error_text)
+    return match.group("founder")
+
+
+def death_date(matches: List[str]) -> List[str]:
+    return [get_death_date(" ".join(matches))]
+
+
+def capital_city(matches: List[str]) -> List[str]:
+    return [get_capital_city(" ".join(matches))]
+
+
+def founder(matches: List[str]) -> List[str]:
+    return [get_founder(" ".join(matches))]
+
 
 
 def query_loop() -> None:
