@@ -2,16 +2,18 @@ import re, string, calendar
 from wikipedia import WikipediaPage
 import wikipedia
 from bs4 import BeautifulSoup
-import nltk
 from nltk import word_tokenize, pos_tag, ne_chunk
 from nltk.tree import Tree
 from match import match
 from typing import List, Callable, Tuple, Any, Match
-
+import nltk
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('maxent_ne_chunker')
 nltk.download('words')
+
+
+
 
 def get_page_html(title: str) -> str:
     """Gets html of a wikipedia page
@@ -177,6 +179,16 @@ def search_pa_list(src: List[str]) -> List[str]:
         a list of answers. Will be ["I don't understand"] if it finds no matches and
         ["No answers"] if it finds a match but no answers
     """
+
+    pa_list: List[Tuple[Pattern, Action]] = [
+    ("when was % born".split(), birth_date),
+    ("what is the polar radius of %".split(), polar_radius),
+    ("when did % die".split(), death_date),
+    ("what is the capital of %".split(), capital_city),
+    ("who founded %".split(), founder),
+    (["bye"], bye_action),
+]
+    
     for pat, act in pa_list:
         mat = match(pat, src)
         if mat is not None:
@@ -185,15 +197,16 @@ def search_pa_list(src: List[str]) -> List[str]:
 
     return ["I don't understand"]
 
+    
+
+
 
 
 def get_death_date(name: str) -> str:
     """Gets death date of the given person"""
     infobox_text = clean_text(get_first_infobox_text(get_page_html(name)))
-    pattern = r"(?:Died\D*)(?P<death>\d{4}-\d{2}-\d{2})"
-    error_text = (
-        "Page infobox has no death information (at least none in xxxx-xx-xx format)"
-    )
+    pattern = r"(?:Died.*?)(?P<death>\w+ \d{1,2}, \d{4}|\d{4})"
+    error_text = "Page infobox has no death information (in recognizable format)"
     match = get_match(infobox_text, pattern, error_text)
     return match.group("death")
 
@@ -201,7 +214,7 @@ def get_death_date(name: str) -> str:
 def get_capital_city(country: str) -> str:
     """Gets the capital city of a country"""
     infobox_text = clean_text(get_first_infobox_text(get_page_html(country)))
-    pattern = r"Capital(?:.*?\n)*?\s*(?P<capital>[A-Z][a-z]+(?: [A-Z][a-z]+)*)"
+    pattern = r"Capital(?:.*?:)?\s*(?P<capital>[A-Z][a-z]+(?: [A-Z][a-z]+)*)"
     error_text = "Page infobox has no capital city information"
     match = get_match(infobox_text, pattern, error_text)
     return match.group("capital")
@@ -209,8 +222,14 @@ def get_capital_city(country: str) -> str:
 
 def get_founder(org: str) -> str:
     """Gets founder of a company or organization"""
-    infobox_text = clean_text(get_first_infobox_text(get_page_html(org)))
-    pattern = r"Founder(?:s)?\s*(?:.*?)\n(?P<founder>.+?)\n"
+    html = get_page_html(org)
+    infobox_raw = get_first_infobox_text(html)
+    print("RAW INFOBOX:\n", infobox_raw)
+
+    infobox_text = clean_text(infobox_raw)
+    print("CLEANED INFOBOX:\n", infobox_text)
+
+    pattern = r"Founder(?:s)?(?:.*?)\n(?P<founder>[^\n]+)"
     error_text = "Page infobox has no founder information"
     match = get_match(infobox_text, pattern, error_text)
     return match.group("founder")
