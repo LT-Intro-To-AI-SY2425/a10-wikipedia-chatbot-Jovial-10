@@ -222,13 +222,8 @@ def get_capital_city(country: str) -> str:
 
 def get_founder(org: str) -> str:
     """Gets founder of a company or organization"""
-    html = get_page_html(org)
-    infobox_raw = get_first_infobox_text(html)
-    print("RAW INFOBOX:\n", infobox_raw)
-
-    infobox_text = clean_text(infobox_raw)
-    print("CLEANED INFOBOX:\n", infobox_text)
-
+  
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(org)))
     pattern = r"Founder(?:s)?(?:.*?)\n(?P<founder>[^\n]+)"
     error_text = "Page infobox has no founder information"
     match = get_match(infobox_text, pattern, error_text)
